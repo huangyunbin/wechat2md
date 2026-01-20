@@ -3,741 +3,381 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>微信公众号文章转 Markdown</title>
+  <meta name="referrer" content="no-referrer">
+  <title>公众号文章转 Markdown</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f5f5;
       min-height: 100vh;
-      color: #333;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* 头部区域 */
-    .header {
-      padding: 60px 20px 40px;
+    header {
       text-align: center;
-      color: white;
+      padding: 20px;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
     }
 
-    .header h1 {
-      font-size: 42px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    header h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 8px;
     }
 
-    .header p {
-      font-size: 18px;
-      opacity: 0.9;
-      max-width: 700px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-
-    /* 主要内容区 */
-    .main {
-      background: #f8f9fa;
-      border-radius: 24px 24px 0 0;
-      min-height: calc(100vh - 200px);
-      padding: 50px 20px 80px;
+    header p {
+      font-size: 14px;
+      color: #666;
     }
 
     .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    /* 输入区域 */
-    .input-section {
-      background: white;
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      margin-bottom: 30px;
-    }
-
-    .input-label {
-      display: block;
-      font-size: 16px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 12px;
-    }
-
-    .input-wrapper {
-      position: relative;
-    }
-
-    .url-input {
-      width: 100%;
-      padding: 18px 20px;
-      font-size: 16px;
-      border: 2px solid #e9ecef;
-      border-radius: 12px;
-      transition: all 0.2s ease;
-      background: #f8f9fa;
-    }
-
-    .url-input:focus {
-      outline: none;
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-    }
-
-    .url-input::placeholder {
-      color: #adb5bd;
-    }
-
-    /* 按钮区域 */
-    .btn-section {
       display: flex;
-      gap: 16px;
-      margin-top: 24px;
-    }
-
-    .btn {
       flex: 1;
-      padding: 18px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      gap: 1px;
+      background: #e0e0e0;
+    }
+
+    .panel {
+      flex: 1;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      flex-direction: column;
+      background: #fff;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-    }
-
-    .btn-secondary {
-      background: #f0f1ff;
-      color: #667eea;
-      border: 2px solid #667eea;
-    }
-
-    .btn-secondary:hover {
-      background: #667eea;
-      color: white;
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
-    .btn-icon {
-      font-size: 20px;
-    }
-
-    /* 状态提示 */
-    .status {
-      margin-top: 20px;
-      padding: 16px 20px;
-      border-radius: 12px;
-      font-size: 15px;
-      display: none;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .status.loading {
-      display: flex;
-      background: #e7f1ff;
-      color: #1971c2;
-    }
-
-    .status.success {
-      display: flex;
-      background: #d3f9d8;
-      color: #2f9e44;
-    }
-
-    .status.error {
-      display: flex;
-      background: #ffe3e3;
-      color: #e03131;
-    }
-
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid currentColor;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* 进度条 */
-    .progress {
-      margin-top: 16px;
-      display: none;
-    }
-
-    .progress.show { display: block; }
-
-    .progress-bar {
-      height: 8px;
-      background: #e9ecef;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    .progress-text {
-      font-size: 13px;
-      color: #868e96;
-      margin-top: 8px;
-      text-align: center;
-    }
-
-    /* 预览区域 */
-    .preview-section {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      display: none;
-      overflow: hidden;
-    }
-
-    .preview-section.show { display: block; }
-
-    .preview-header {
+    .panel-header {
+      padding: 12px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid #e0e0e0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 24px;
-      border-bottom: 1px solid #e9ecef;
-      background: #f8f9fa;
     }
 
-    .preview-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #495057;
+    .panel-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
     }
 
     .copy-btn {
-      padding: 8px 16px;
-      background: white;
-      color: #667eea;
-      border: 1px solid #667eea;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
+      padding: 6px 12px;
+      font-size: 12px;
+      background: #07C160;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background 0.2s;
     }
 
     .copy-btn:hover {
-      background: #667eea;
-      color: white;
+      background: #06ae56;
     }
 
-    .preview-content {
-      padding: 24px;
-      max-height: 500px;
-      overflow-y: auto;
-      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    .copy-btn:active {
+      background: #059a4c;
+    }
+
+    .editor {
+      flex: 1;
+      padding: 16px;
+      font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
       font-size: 14px;
-      line-height: 1.7;
-      white-space: pre-wrap;
-      word-break: break-word;
-      color: #495057;
-      background: white;
+      line-height: 1.6;
+      border: none;
+      outline: none;
+      resize: none;
+      background: #fff;
     }
 
-    /* 页脚 */
-    .footer {
-      text-align: center;
-      padding: 30px 20px;
-      color: #868e96;
-      font-size: 14px;
+    .preview {
+      flex: 1;
+      padding: 16px;
+      overflow: auto;
+      line-height: 1.8;
     }
 
-    .footer a {
-      color: #667eea;
+    /* Markdown 预览样式 */
+    .preview h1, .preview h2, .preview h3, .preview h4, .preview h5, .preview h6 {
+      margin: 16px 0 8px;
+      font-weight: 600;
+    }
+
+    .preview h1 { font-size: 24px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+    .preview h2 { font-size: 20px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .preview h3 { font-size: 18px; }
+    .preview h4 { font-size: 16px; }
+
+    .preview p {
+      margin: 12px 0;
+    }
+
+    .preview ul, .preview ol {
+      margin: 12px 0;
+      padding-left: 24px;
+    }
+
+    .preview li {
+      margin: 4px 0;
+    }
+
+    .preview code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: "Monaco", "Menlo", monospace;
+      font-size: 13px;
+    }
+
+    .preview pre {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+
+    .preview pre code {
+      background: none;
+      padding: 0;
+    }
+
+    .preview blockquote {
+      border-left: 4px solid #ddd;
+      padding-left: 16px;
+      margin: 12px 0;
+      color: #666;
+    }
+
+    .preview table {
+      border-collapse: collapse;
+      margin: 12px 0;
+      width: 100%;
+    }
+
+    .preview th, .preview td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .preview th {
+      background: #f5f5f5;
+    }
+
+    .preview a {
+      color: #1890ff;
       text-decoration: none;
     }
 
-    /* 响应式 */
-    @media (max-width: 640px) {
-      .header { padding: 40px 20px 30px; }
-      .header h1 { font-size: 28px; }
-      .header p { font-size: 15px; }
-      .main { padding: 30px 16px 60px; }
-      .input-section { padding: 24px 20px; }
-      .btn-section { flex-direction: column; }
-      .btn { padding: 16px 20px; }
+    .preview a:hover {
+      text-decoration: underline;
+    }
+
+    .preview img {
+      max-width: 100%;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    /* 加载状态 */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.3s;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-text {
+      font-size: 16px;
+      color: #666;
+    }
+
+    .loading-text::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
     }
   </style>
 </head>
 <body>
-  <!-- 51.la 统计 -->
-  <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-  <script>
-    LA.init({id:"3Og21X2UR2FrU1E9",ck:"3Og21X2UR2FrU1E9"});
+  <header>
+    <h1>公众号文章转 Markdown</h1>
+    <p>在公众号文章中全选内容，复制后粘贴到左侧编辑区，即可自动转换</p>
+  </header>
 
-    // 安全的事件上报函数（失败重试1次）
-    function trackEvent(eventId, retries) {
-      retries = retries === undefined ? 1 : retries;
-      if (typeof LA !== 'undefined' && LA.track) {
-        LA.track(eventId);
-      } else if (retries > 0) {
-        setTimeout(function() { trackEvent(eventId, retries - 1); }, 500);
-      }
-    }
-  </script>
-  <div class="header">
-    <h1>微信公众号文章转 Markdown</h1>
-    <p>输入公众号链接，一键转换为 Markdown 格式，支持图片打包下载</p>
-  </div>
-
-  <div class="main">
-    <div class="container">
-      <div class="input-section">
-        <label class="input-label">文章链接：</label>
-        <div class="input-wrapper">
-          <input type="text" class="url-input" id="url" placeholder="粘贴微信公众号文章链接，如 https://mp.weixin.qq.com/s/..." />
-        </div>
-
-        <div class="code-section" style="margin-top: 20px;">
-          <label class="input-label">
-            会员码：
-            <a href="#" id="buyLink" style="font-weight: normal; font-size: 14px; margin-left: 8px;">没有？去购买</a>
-          </label>
-          <div class="input-wrapper">
-            <input type="text" class="url-input" id="memberCode" placeholder="输入会员码" style="text-transform: uppercase;" />
-          </div>
-        </div>
-
-        <div class="btn-section">
-          <button class="btn btn-secondary" id="convertMd">
-            <span class="btn-icon">📄</span>
-            下载 Markdown
-          </button>
-          <button class="btn btn-primary" id="convertZip">
-            <span class="btn-icon">📦</span>
-            下载 Markdown 和图片 (ZIP)
-          </button>
-        </div>
-
-        <div class="status" id="status">
-          <div class="spinner"></div>
-          <span id="statusText"></span>
-        </div>
-
-        <div class="progress" id="progress">
-          <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-          </div>
-          <div class="progress-text" id="progressText"></div>
-        </div>
+  <div class="container">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Markdown</span>
+        <button class="copy-btn" onclick="copyMarkdown()">复制 Markdown</button>
       </div>
+      <textarea class="editor" id="editor" placeholder="粘贴公众号文章内容到这里..."></textarea>
+    </div>
 
-      <div class="preview-section" id="preview">
-        <div class="preview-header">
-          <span class="preview-title">Markdown 预览</span>
-          <button class="copy-btn" id="copy">复制内容</button>
-        </div>
-        <pre class="preview-content" id="markdown"></pre>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">预览</span>
       </div>
-
+      <div class="preview" id="preview"></div>
     </div>
   </div>
 
-  <!-- Turndown: HTML to Markdown -->
-  <script src="https://unpkg.com/turndown/dist/turndown.js"></script>
-  <!-- JSZip: 打包 ZIP -->
-  <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+  <div class="toast" id="toast">已复制到剪贴板</div>
 
+  <!-- 加载提示 -->
+  <div class="loading-overlay" id="loading">
+    <span class="loading-text">引擎加载中</span>
+  </div>
+
+  <!-- 使用 unpkg CDN（国内更快） -->
   <script>
-    const PROXY_URL = 'https://wechat-proxy-rmzksrggdf.cn-hangzhou.fcapp.run';
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+    const toast = document.getElementById('toast');
+    const loading = document.getElementById('loading');
 
-    // 购买链接（替换为你的公众号付费文章链接）
-    const BUY_URL = 'https://mp.weixin.qq.com/s/xxxxxx';
+    let lute = null;
 
-    // 有效会员码的哈希值
-    const VALID_HASHES = [
-      'cdc67666a4af117198607259f57e50eab0c0ae58f9468a1c910a21c60d1b2dce',
-      'ad031fc2d0e450e7cba427b6ac049e775527712e24bc85095ef6266a665219f2',
-      '325156f4b00f3ab964b28d5577c4622da8240020274f2e9315ec14dd406c188b',
-      '876447482d764ddd72681697ff699fcd094a57b07304b22f090ccc7d497878b4',
-      'bbda13a6e122a96ae97a4d0cdc0324ed0db992e3af57a178ebabe5e92c4b9bf6',
-      '8b626d5033a70ce593856699a1b92385c155e082d7887d41d2a6cc78a4b0f9b5',
-      '58f1fc584385770d2c4473eca06ea613e800e5fc7afe2d6cae1ddfa5663fc6cc',
-      '63afe91566d6146bb9cae996e001447b83c908e6fb8a186c6f889fa583c011d4',
-      'c00ce7c3fa567afac1f2ab5010a7510745af4d403a39df6728a1cc14c3b097f3',
-      'a688fe531784de41070b76c3e7db44e5ff469eed0253d56ec29fb4dd818828c1',
-    ];
-
-    // SHA-256 哈希函数
-    async function sha256(message) {
-      const msgBuffer = new TextEncoder().encode(message);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // 校验会员码
-    async function validateCode(code) {
-      if (!code) return false;
-      const hash = await sha256(code.trim().toUpperCase());
-      return VALID_HASHES.includes(hash);
-    }
-
-    const urlInput = document.getElementById('url');
-    const memberCodeInput = document.getElementById('memberCode');
-    const buyLink = document.getElementById('buyLink');
-    const convertMdBtn = document.getElementById('convertMd');
-    const convertZipBtn = document.getElementById('convertZip');
-    const statusEl = document.getElementById('status');
-    const statusText = document.getElementById('statusText');
-    const progressEl = document.getElementById('progress');
-    const progressFill = document.getElementById('progressFill');
-    const progressTextEl = document.getElementById('progressText');
-    const previewEl = document.getElementById('preview');
-    const markdownEl = document.getElementById('markdown');
-    const copyBtn = document.getElementById('copy');
-
-    function setStatus(type, message) {
-      statusEl.className = 'status ' + type;
-      statusText.textContent = message;
-      // 隐藏 spinner 在非 loading 状态
-      statusEl.querySelector('.spinner').style.display = type === 'loading' ? 'block' : 'none';
-    }
-
-    function hideStatus() {
-      statusEl.className = 'status';
-    }
-
-    function setProgress(percent, text) {
-      progressEl.classList.add('show');
-      progressFill.style.width = percent + '%';
-      progressTextEl.textContent = text;
-    }
-
-    function hideProgress() {
-      progressEl.classList.remove('show');
-    }
-
-    function sanitizeFilename(name) {
-      return name.replace(/[<>:"/\\|?*]/g, '').replace(/\s+/g, ' ').trim().slice(0, 100);
-    }
-
-    function download(filename, content, mimeType = 'text/markdown;charset=utf-8') {
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    async function fetchArticle(url) {
-      const proxyUrl = `${PROXY_URL}?url=${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
-      if (!response.ok) {
-        throw new Error('获取文章失败: ' + response.status);
-      }
-      return await response.text();
-    }
-
-    function parseArticle(html) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-
-      let title = '未知标题';
-      const titleEl = doc.getElementById('activity-name') || doc.querySelector('.rich_media_title');
-      if (titleEl) {
-        title = titleEl.textContent.trim();
-      }
-
-      const contentEl = doc.getElementById('js_content');
-      if (!contentEl) {
-        throw new Error('无法找到文章正文');
-      }
-
-      contentEl.querySelectorAll('img').forEach(img => {
-        const dataSrc = img.getAttribute('data-src');
-        if (dataSrc) {
-          img.src = dataSrc;
+    // 单个 CDN 加载（unpkg 国内较快）
+    function loadLute() {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/vditor@3.11.2/dist/js/lute/lute.min.js';
+      script.onload = function() {
+        if (typeof Lute !== 'undefined') {
+          lute = Lute.New();
+          console.log('Lute 加载成功');
+          loading.classList.add('hidden');
         }
-      });
-
-      return { title, contentEl };
+      };
+      script.onerror = function() {
+        loading.innerHTML = '<span style="color: #e74c3c;">引擎加载失败，请刷新重试</span>';
+      };
+      document.head.appendChild(script);
     }
 
-    function htmlToMarkdown(title, contentEl) {
-      const turndownService = new TurndownService({
-        headingStyle: 'atx',
-        codeBlockStyle: 'fenced'
-      });
-      let markdown = turndownService.turndown(contentEl.innerHTML);
-      return `# ${title}\n\n${markdown}`;
-    }
+    // 开始加载
+    loadLute();
 
-    function extractImageUrls(markdown) {
-      const imgPattern = /!\[([^\]]*)\]\(([^)]+)\)/g;
-      const images = [];
-      let match;
-      while ((match = imgPattern.exec(markdown)) !== null) {
-        images.push({ alt: match[1], url: match[2] });
-      }
-      return images;
-    }
-
-    async function downloadImage(url) {
-      const proxyUrl = `${PROXY_URL}?url=${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
-      if (!response.ok) {
-        throw new Error('图片下载失败');
-      }
-      return await response.blob();
-    }
-
-    function getImageExtension(blob) {
-      const type = blob.type;
-      if (type.includes('png')) return '.png';
-      if (type.includes('gif')) return '.gif';
-      if (type.includes('webp')) return '.webp';
-      if (type.includes('svg')) return '.svg';
-      return '.jpg';
-    }
-
-    async function convertToMarkdown() {
-      const url = urlInput.value.trim();
-      const code = memberCodeInput.value.trim();
-
-      if (!code) {
-        setStatus('error', '请输入会员码');
-        return;
-      }
-
-      if (!await validateCode(code)) {
-        setStatus('error', '会员码无效，请检查或购买');
-        return;
-      }
-
-      if (!url) {
-        setStatus('error', '请输入文章链接');
-        return;
-      }
-
-      if (!url.includes('mp.weixin.qq.com')) {
-        setStatus('error', '请输入有效的微信公众号文章链接');
-        return;
-      }
-
-      convertMdBtn.disabled = true;
-      convertZipBtn.disabled = true;
-      previewEl.classList.remove('show');
-      hideProgress();
-
-      try {
-        setStatus('loading', '正在获取文章...');
-        const html = await fetchArticle(url);
-
-        setStatus('loading', '正在解析文章...');
-        const { title, contentEl } = parseArticle(html);
-
-        setStatus('loading', '正在转换为 Markdown...');
-        const markdown = htmlToMarkdown(title, contentEl);
-
-        markdownEl.textContent = markdown;
-        previewEl.classList.add('show');
-
-        const filename = sanitizeFilename(title) + '.md';
-        download(filename, markdown);
-
-        // 51.la 统计：记录下载事件
-        trackEvent('download_md');
-
-        setStatus('success', `转换成功！已下载: ${filename}`);
-
-      } catch (error) {
-        setStatus('error', error.message);
-      } finally {
-        convertMdBtn.disabled = false;
-        convertZipBtn.disabled = false;
-      }
-    }
-
-    async function convertToZip() {
-      const url = urlInput.value.trim();
-      const code = memberCodeInput.value.trim();
-
-      if (!code) {
-        setStatus('error', '请输入会员码');
-        return;
-      }
-
-      if (!await validateCode(code)) {
-        setStatus('error', '会员码无效，请检查或购买');
-        return;
-      }
-
-      if (!url) {
-        setStatus('error', '请输入文章链接');
-        return;
-      }
-
-      if (!url.includes('mp.weixin.qq.com')) {
-        setStatus('error', '请输入有效的微信公众号文章链接');
-        return;
-      }
-
-      convertMdBtn.disabled = true;
-      convertZipBtn.disabled = true;
-      previewEl.classList.remove('show');
-
-      try {
-        setStatus('loading', '正在获取文章...');
-        setProgress(10, '获取文章中...');
-        const html = await fetchArticle(url);
-
-        setStatus('loading', '正在解析文章...');
-        setProgress(20, '解析文章中...');
-        const { title, contentEl } = parseArticle(html);
-
-        setStatus('loading', '正在转换为 Markdown...');
-        setProgress(30, '转换 Markdown 中...');
-        let markdown = htmlToMarkdown(title, contentEl);
-
-        const images = extractImageUrls(markdown);
-
-        if (images.length === 0) {
-          const filename = sanitizeFilename(title) + '.md';
-          download(filename, markdown);
-          setStatus('success', `转换成功！文章无图片，已下载: ${filename}`);
-          hideProgress();
-          return;
-        }
-
-        setStatus('loading', `正在下载图片 (0/${images.length})...`);
-
-        const zip = new JSZip();
-        const imgFolder = zip.folder('images');
-
-        for (let i = 0; i < images.length; i++) {
-          const { alt, url: imgUrl } = images[i];
-          const progress = 30 + Math.round((i / images.length) * 50);
-          setProgress(progress, `下载图片 ${i + 1}/${images.length}...`);
-          setStatus('loading', `正在下载图片 (${i + 1}/${images.length})...`);
-
-          try {
-            const blob = await downloadImage(imgUrl);
-            const ext = getImageExtension(blob);
-            const imgFilename = `image_${String(i + 1).padStart(2, '0')}${ext}`;
-
-            imgFolder.file(imgFilename, blob);
-            markdown = markdown.replace(`![${alt}](${imgUrl})`, `![${alt}](images/${imgFilename})`);
-          } catch (e) {
-            console.warn(`图片下载失败: ${imgUrl}`, e);
-          }
-        }
-
-        setStatus('loading', '正在打包 ZIP...');
-        setProgress(90, '打包 ZIP 中...');
-
-        zip.file(`${sanitizeFilename(title)}.md`, markdown);
-
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const zipFilename = sanitizeFilename(title) + '.zip';
-
-        download(zipFilename, zipBlob, 'application/zip');
-
-        // 51.la 统计：记录下载事件
-        trackEvent('download_zip');
-
-        markdownEl.textContent = markdown;
-        previewEl.classList.add('show');
-
-        setProgress(100, '完成!');
-        setStatus('success', `转换成功！已下载: ${zipFilename} (含 ${images.length} 张图片)`);
-
-        setTimeout(hideProgress, 2000);
-
-      } catch (error) {
-        setStatus('error', error.message);
-        hideProgress();
-      } finally {
-        convertMdBtn.disabled = false;
-        convertZipBtn.disabled = false;
-      }
-    }
-
-    convertMdBtn.addEventListener('click', convertToMarkdown);
-    convertZipBtn.addEventListener('click', convertToZip);
-
-    urlInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') convertToMarkdown();
-    });
-
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(markdownEl.textContent).then(() => {
-        copyBtn.textContent = '已复制!';
-        setTimeout(() => { copyBtn.textContent = '复制内容'; }, 2000);
-      });
-    });
-
-    // 购买链接点击
-    buyLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.open(BUY_URL, '_blank');
-    });
-
-    // 会员码变化时保存到 localStorage
-    memberCodeInput.addEventListener('input', () => {
-      const code = memberCodeInput.value.trim().toUpperCase();
-      if (code) {
-        localStorage.setItem('wechat2md_code', code);
-      }
-    });
-
-    // 页面加载时初始化会员码
-    (function initMemberCode() {
-      // 优先从 URL 参数读取
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlCode = urlParams.get('code');
-
-      if (urlCode) {
-        memberCodeInput.value = urlCode.toUpperCase();
-        localStorage.setItem('wechat2md_code', urlCode.toUpperCase());
+    // 实时预览：Markdown -> HTML
+    function updatePreview() {
+      const markdown = editor.value;
+      if (markdown.trim() && lute) {
+        preview.innerHTML = lute.MarkdownStr('', markdown);
+      } else if (markdown.trim()) {
+        preview.innerHTML = '<pre>' + markdown.replace(/</g, '&lt;') + '</pre>';
       } else {
-        // 从 localStorage 读取
-        const savedCode = localStorage.getItem('wechat2md_code');
-        if (savedCode) {
-          memberCodeInput.value = savedCode;
-        }
+        preview.innerHTML = '<p style="color: #999;">预览区域</p>';
       }
-    })();
+    }
+
+    // 监听输入，实时更新预览
+    editor.addEventListener('input', updatePreview);
+
+    // 监听粘贴事件
+    editor.addEventListener('paste', function(e) {
+      const html = e.clipboardData.getData('text/html');
+
+      if (html && html.trim() && lute) {
+        e.preventDefault();
+        let markdown = lute.HTML2Md(html);
+
+        // 调试：看看转换后的原始内容
+        console.log('转换前:', markdown);
+
+        // 后处理
+        // 1. 删除所有零宽字符
+        markdown = markdown.replace(/[\u200B\u200C\u200D\uFEFF]/g, '');
+        // 2. 合并连续加粗 ****
+        markdown = markdown.replace(/\*\*\*\*/g, '');
+
+        console.log('转换后:', markdown);
+
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const text = editor.value;
+
+        editor.value = text.substring(0, start) + markdown + text.substring(end);
+        const newPos = start + markdown.length;
+        editor.setSelectionRange(newPos, newPos);
+
+        updatePreview();
+      } else if (html && html.trim() && !lute) {
+        showToast('引擎加载中，请稍候...');
+      }
+    });
+
+    // 复制 Markdown
+    function copyMarkdown() {
+      const text = editor.value;
+      if (!text.trim()) {
+        showToast('没有内容可复制');
+        return;
+      }
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已复制到剪贴板');
+      }).catch(() => {
+        editor.select();
+        document.execCommand('copy');
+        showToast('已复制到剪贴板');
+      });
+    }
+
+    // 显示提示
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    // 初始化预览
+    updatePreview();
   </script>
 </body>
 </html>
